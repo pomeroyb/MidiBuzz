@@ -1,5 +1,14 @@
 from decimal import *
 import midi
+import argparse
+
+argsp = argparse.ArgumentParser()
+argsp.add_argument('-o', '--output', type=str, help='output g-code file to generate (Default: song.gcode)', required=False, default="song.gcode")
+
+requiredNamed = argsp.add_argument_group('required arguments')
+requiredNamed.add_argument('-i', '--input', type=str, help='input midi file to convert', required=True)
+
+args = argsp.parse_args()
 
 # This lets us convert from Midi # to frequency
 MIDI_NUMBERS = {
@@ -138,7 +147,7 @@ tempo = 120 # Default tempo for midi is 120 bpm
 gcode = []
 currentCode = None
 
-pattern = midi.read_midifile("superSimpleSelfie.mid")
+pattern = midi.read_midifile(args.input)
 
 
 for track in pattern[:]:
@@ -157,11 +166,13 @@ for track in pattern[:]:
         # notes!
         
         #now we find each NoteOnEvent, and convert it to gcode       
-        
-        if event.name == "Note On":
+       
+        if event.name == "Note On" and event.velocity != 0:
             # First convert Midi number to frequency
             currentCode = "M300 S" + str(MIDI_NUMBERS[event.get_pitch()]) + " P"
-        if event.name == "Note Off":
+
+        #Some midi files give note offs, some give Note Ons with a velocity of 0 to denote the end of a note
+        if (event.name == "Note Off" or (event.name == "Note On" and event.velocity == 0)) and currentCode != None:
             #add the delay 
             delay = event.tick * 0.001
             currentCode = currentCode + str(delay * 1000) # Need to convert seconds to millis for Marlin
@@ -171,7 +182,7 @@ for track in pattern[:]:
 #print gcode
 
 #Export gcode to a file:
-with open('song.gcode', 'w') as theFile:
+with open(args.output, 'w') as theFile:
     for item in gcode:
         theFile.write("%s\n" % item)
 
