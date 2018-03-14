@@ -175,7 +175,7 @@ for track in pattern[:]:
         if (event.name == "Note Off" or (event.name == "Note On" and event.velocity == 0)) and currentCode != None:
             #add the delay 
             delay = event.tick * 0.001
-            currentCode = currentCode + str((delay * 1000)) # Need to convert seconds to millis for Marlin
+            currentCode = currentCode + str(delay * 1000) # Need to convert seconds to millis for Marlin
             gcode.append(currentCode)
             currentCode = None
 
